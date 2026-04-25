@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import datetime
 from decimal import Decimal
+from enum import Enum
 import os
 from pathlib import Path
 from typing import Final
@@ -61,7 +62,16 @@ DIVIDEND_DOUBLE_TAXATION_RULES: Final[dict[str, TaxTreaty]] = {
 # General constants
 # =============================================================================
 
-CGT_TEST_MODE = os.environ.get("CGT_TEST_MODE", "0") == "1"
+
+class TestMode(Enum):
+    """Controls HMRC API access and exchange-rate file writes during test runs."""
+
+    DISABLED = 0
+    STRICT = 1
+    RECORD = 2
+
+
+CGT_TEST_MODE: Final = TestMode(int(os.environ.get("CGT_TEST_MODE", "0")))
 INTERNAL_START_DATE: Final = datetime.date(2010, 1, 1)
 
 # Bed and Breakfast rule: HMRC requires matching disposals with acquisitions

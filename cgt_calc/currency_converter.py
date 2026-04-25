@@ -14,7 +14,7 @@ from pyrate_limiter.abstracts.rate import Duration
 from pyrate_limiter.extras.requests_limiter import RateLimitedRequestsSession
 from requests.adapters import HTTPAdapter, Retry
 
-from .const import CGT_TEST_MODE
+from .const import CGT_TEST_MODE, TestMode
 from .dates import is_date
 from .exceptions import ExchangeRateMissingError, ExternalApiError, ParsingError
 from .util import open_with_parents
@@ -128,7 +128,7 @@ class CurrencyConverter:
     def _write_exchange_rates_file(
         exchange_rates_file: Path | None, data: dict[datetime.date, dict[str, Decimal]]
     ) -> None:
-        if exchange_rates_file is None or CGT_TEST_MODE:
+        if exchange_rates_file is None or CGT_TEST_MODE == TestMode.STRICT:
             return
         with open_with_parents(exchange_rates_file) as fout:
             data_rows = [
@@ -140,9 +140,11 @@ class CurrencyConverter:
             writer.writerows([EXCHANGE_RATES_HEADER, *data_rows])
 
     def _query_hmrc_api(self, date: datetime.date) -> None:
-        if CGT_TEST_MODE:
+        if CGT_TEST_MODE == TestMode.STRICT:
             raise RuntimeError(
-                "HMRC values should be provided for tests to avoid flakiness!"
+                "HMRC API called during tests — add the required exchange rates to "
+                "tests/exchange_rates_data.csv, or run with CGT_TEST_MODE=2 to "
+                "fetch and save them automatically."
             )
         # Pre 2021 we need to use the old HMRC endpoint
         if date.year < NEW_ENDPOINT_FROM_YEAR:
